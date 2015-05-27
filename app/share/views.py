@@ -127,7 +127,7 @@ def insert():
                 
         response = VW_CLIENT.insert_metadata(watershed_metadata)
         
-    if model_name == "PRMS":
+    if model_name == "prms":
         return render_template("share/files.html", model_run_uuid = new_mr_uuid, inputFileName = input_file) 
 
 @share.route('/files/upload', methods=['POST'])
