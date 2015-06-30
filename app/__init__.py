@@ -38,7 +38,10 @@ def create_app(config_name):
     from .share import share as share_blueprint
     app.register_blueprint(share_blueprint, url_prefix='/share')
 
-    from .modeling import modeling as modeling_blueprint
-    app.register_blueprint(modeling_blueprint, url_prefix='/modeling')
+    from .processing import processing as processing_blueprint
+    app.register_blueprint(processing_blueprint, url_prefix='/processing')
+
+    from .visualization import visualization as visualization_blueprint
+    app.register_blueprint(visualization_blueprint, url_prefix='/visualization')
 
     return app
