@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+{{ super() }}
+
+<style> /* set the local CSS */
+div.csv_metadata
+{
+	display:none;
+}
+</style>
+
+<!-- THIS IS USED TO GET METADATA OF CSV FILES-->
+<div class="csv_metadata">
+	{{ item_nameList|join(", ") }}
+</div>
+
+<p class = "visParagraph">
+
+	<div id = "lineChartdiv"></div>
+
+	<div>
+		{% for name in item_nameList %}
+			<!-- THIS IS SKIP THE FIRST ELEMENT, COZ FIRST ELEMENT WILL BE X AXIS -->
+			{% if loop.index == 1 %}
+			
+			<!-- THIS IS USED TO SEPARATE ITEMS -->
+			{% elif loop.index is divisibleby 4 %}
+				<br>
+				<input type = "checkbox" id = "{{loop.index}}"  onClick="change(this)" checked>	
+				<label for="{{loop.index}}"> {{name}}</label>
+			{% else %}
+				<input type = "checkbox" id = "{{loop.index}}"  onClick="change(this)" checked>	
+				<label for="{{loop.index}}"> {{name}}</label>
+			{% endif %}
+		{% endfor %}
+	</div>
+
+	<div class = "confirmButton"></div>
+
+</p>
+
+<!-- VISUALIZATION PART -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://dygraphs.com/dygraph-combined.js"></script>
+<!-- THIS JS IS USED TO EXPORT ARRAY INTO CSV AND DOWNLOAD LOCALLY -->
+<script src="http://alasql.org/console/alasql.min.js"></script>
+<script src='js/lineChart.js' type='text/javascript'></script>
+
+
+{% endblock %}
