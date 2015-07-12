@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+{{ super() }}
+
+
+<script src="http://dygraphs.com/dygraph-combined.js"></script>
+</head>
+<body>
+<div id="graphdiv"></div>
+<script type="text/javascript">
+  g = new Dygraph(
+
+    // containing div
+    document.getElementById("graphdiv"),
+
+    "{{csv_string}}"
+
+  );
+</script>
+</body>
+
+{% endblock %}

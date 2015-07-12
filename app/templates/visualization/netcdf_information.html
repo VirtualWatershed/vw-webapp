@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+{{ super() }}
+
+<style> /* set the local CSS */
+div.netcdf_metadata
+{
+	display:none;
+}
+</style>
+
+<!-- THIS IS USED TO GET METADATA OF NETCDF FILES-->
+<div class="netcdf_metadata">
+
+	<li class="netcdf_variable_information">
+		{{ variable_name_list|join(", ") }}
+	</li>
+
+	{% for variable in variable_class_list %}
+		<p class="{{variable.variable_name}}Paragraph">
+			<li id="{{variable.variable_name}}DimensionCountID">
+				{{ variable.dimension_count }}
+			</li>
+
+			<li class="{{variable.variable_name}}DimensionsList">
+				{{ variable.dimension_name_list|join(", ") }}
+			</li>
+
+			<li id="{{variable.variable_name}}InformationID">
+				{{ variable.description_information }}
+			</li>
+		</p>
+	{% endfor %}
+	
+</div>
+
+<h1>NetCDF Visualization</h1>
+<p>This section is for NetCDF file visualization. Users can choose a NetCDF file from XXX and choose to visualize the file with line chart or a map. If you want to visualize NetCDF file with line chart, the system will lead you to narrow down the dimension of the chosen variable into 2 dimensions. If you want to visualize NetCDF file with line chart, the system will lead you to narrow down the dimension of the chosen variable into 4 dimensions (lat, lon, another dimension, and variable values).</p>
+
+<div>
+	<p>
+		<li style="font-weight: bold">Step One: choose a varible you want to visualize from the select box</li>
+		<li class="variableSelectBox"></li>
+		<p class="variableDimensionInformation"></p>
+	</p>
+
+	<p>
+		<li style="font-weight: bold">Step Two: choose a visualization method</li>
+		This week line chart only, next week we will have map.
+	</p>
+
+	<p>
+		<li style="font-weight: bold">Step Three: narrow down dimensions </li>
+		<p class="narrowDownInstructions"></p>
+	</p>
+	
+	<div class="buttonDiv">
+		<p class="buttonParagraph"></p>
+	</div>	
+	
+</div>
+
+
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src='js/netcdf_information.js' type='text/javascript'></script>
+
+{% endblock %}

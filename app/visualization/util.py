@@ -1,7 +1,7 @@
 #This function is used to get the name of each item
 #and remove the offset and write the results into temp file
 #The users need to remove the temp file by themselves
-def getItemName(downloadDir = '', filename = '', itemNameList = [], rowOffset = 0, rowOffset2 = 0, columnOffset = 0):
+def getItemName(downloadDir='', filename='', itemNameList=[], rowOffset=0, rowOffset2=0, columnOffset=0):
     inputFile = open(downloadDir + filename,'r')
     itemList = []
     #outputFile = open(downloadDir + 'temp' + filename, 'w+')
