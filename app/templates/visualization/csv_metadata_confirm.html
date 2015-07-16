@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+{{ super() }}
+
+<h1>CSV Metadata Confirmation</h1>
+
+<div>
+	<p style="color:red">Fill the blanks about {{filename}} Metadata</p>
+<div>
+
+<div class="instructionCSV">
+	<h2>CSV Metadata Instruction</h2>
+	<p>The system needs you to input row offset and column offset 
+	of your csv file. The image below displays an example about a csv file. 
+	The red circle includes all the metadata rows (19 rows). There are no column 
+	offset of this file. Therefore, you need to input 19 for row offset and 
+	0 for column offset</p>
+	<img src="rowOffsetEG.png" alt="row offset example" style="width:900px;height:600px;">
+</div>
+
+<div class="uploadFileInformation">
+    <form method="post" action="/visualization/CSV/visualization_results/upload/{{filename}}">
+      <label for="row_offset">Please enter csv row offset (less than 100, integer):</label>
+      <input type="number" name="row_offset" min="0" max="100" /><br />
+      <label for="column_offset">Please enter csv column offset (less than 100, integer):</label>
+      <input type="number" name="column_offset" min="0" max="100"/><br />
+      <input type="submit" value="Confirm" />
+    </form>
+</div>
+
+
+
+{% endblock %}

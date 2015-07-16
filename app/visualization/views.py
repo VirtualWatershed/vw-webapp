@@ -9,73 +9,138 @@ from wcwave_adaptors import default_vw_client
 from wcwave_adaptors import make_fgdc_metadata, metadata_from_file
 from netCDF4 import Dataset
 
+from .classes import NetCDFInformation, VariableDimensionInformation
+
 import os, osr, util, numpy
 
 
 VW_CLIENT = default_vw_client()
 
-
 @visualization.route('/')
 @login_required
-def confirmVisFile():
+def index():
+    return render_template('visualization/index.html')
+
+# this part is for upload csv files
+# the idea is from http://flask.pocoo.org/docs/0.10/patterns/fileuploads/
+@visualization.route('/CSV/')
+@login_required
+def csv_access_files():
+    return render_template('visualization/csv_file_access.html')
+
+@visualization.route('/CSV/upload_page')
+@login_required
+def csv_upload_files():
+    return render_template('visualization/csv_upload.html')
+
+# Route that will process the file upload
+@visualization.route('/CSV/upload/', methods=['POST'])
+def csv_upload():
+    # Get the name of the uploaded file
+    file = request.files['file']
+    # Check if the file is one of the allowed types/extensions
+    if file and util.allowed_file_csv(file.filename):
+        # Make the filename safe, remove unsupported chars
+        filename = secure_filename(file.filename)
+        # Move the file form the temporal folder to
+        # app/visualization
+        # get the current app location
+        app_root = os.path.dirname(os.path.abspath(__file__))
+        download_dir = app_root + '/tempData/'
+        file.save(os.path.join(download_dir, filename))
+        # Redirect the user to the uploaded_file route, which
+        # will basicaly show on the browser the uploaded file
+        return render_template('visualization/csv_metadata_confirm.html',\
+                               filename=filename)
+    else:
+        return render_template('visualization/csv_error_upload.html')
+
+# upload section ends here
+
+
+@visualization.route('/CSV/visualization_results/upload/<filename>', methods=['POST'])
+@login_required
+def csv_upload_visualization(filename=''):
     """
-    This function is designed for users to choose
+    This function is designed for users to upload
     a file to visualize
     """
-    # TODO: upload file part
-
-    # TODO: obtain units from csv file
 
     # TODO
     # choose a file stored in the server 
     # grab the url of the csv file
     
-    
+    # obtain row_offset and column_offset
+    csv_row_offset = request.form['row_offset']
+    csv_column_offset = request.form['column_offset']
 
-    # this part is just for test
-    # for csv only
-    item_nameList = []
+    item_name_list = []
     # get the current app location
     # app/visualization
-    APP_ROOT = os.path.dirname(os.path.abspath(__file__))
-    download_dir = APP_ROOT + '/tempData/'
-    filename = 'BRW_HrlySummary_2014.csv'
+    app_root = os.path.dirname(os.path.abspath(__file__))
+    download_dir = app_root + '/tempData/'
     # getItemName five variables: folder, file name, item in the csv,
     # first row offset, second row offset,  coloumn offset
-    util.getItemName(download_dir,filename,item_nameList ,19,0,0)
-   
-    return render_template('visualization/index.html', item_nameList = item_nameList)
+    util.getItemName(download_dir, filename, item_name_list, \
+                     csv_row_offset, 0, csv_column_offset)
+    input_filename = 'temp' + filename
+    return render_template('visualization/csv_visualization_results.html', \
+                           item_name_list=item_name_list, \
+                           input_filename=input_filename)
 
-# this class is used to record the variable parameters
-# information, name, dimension count, dimension names
-class NetCDFInformation:
-    variable_name = ''
-    dimension_count = 0
-    dimension_name_list = []
-    description_information = ''
-    def __init__(self, name, count, name_list, description=''):
-        self.variable_name = name
-        self.dimension_count = count
-        self.dimension_name_list = name_list
-        self.description_information = description
+# this part is for upload NetCDF files
+# the idea is from http://flask.pocoo.org/docs/0.10/patterns/fileuploads/
+@visualization.route('/NetCDF/')
+@login_required
+def netcdf_access_files():
+    return render_template('visualization/netcdf_file_access.html')
+
+@visualization.route('/NetCDF/upload_page')
+@login_required
+def netcdf_upload_files():
+    return render_template('visualization/netcdf_upload.html')
+
+# Route that will process the file upload
+@visualization.route('/NetCDF/upload/', methods=['POST'])
+def netcdf_upload():
+    # Get the name of the uploaded file
+    file = request.files['file']
+    # Check if the file is one of the allowed types/extensions
+    if file and util.allowed_file_netcdf(file.filename):
+        # Make the filename safe, remove unsupported chars
+        filename = secure_filename(file.filename)
+        # Move the file form the temporal folder to
+        # app/visualization
+        # get the current app location
+        app_root = os.path.dirname(os.path.abspath(__file__))
+        download_dir = app_root + '/tempData/'
+        file.save(os.path.join(download_dir, filename))
+        # Redirect the user to the uploaded_file route, which
+        # will basicaly show on the browser the uploaded file
+        return redirect('/visualization/NetCDF/'+filename)
+    else:
+        return render_template('visualization/netcdf_error_upload.html')
+
+# upload section ends here
+
 
 # this is an evil global variable
 netcdf_file_local_path = ''
 # this is used by users to confirm which varible to visualize
-# and which dimension about that varible by /visualization/linechart/variable_name/dimension_y
+# and which dimension about that varible by 
+# /visualization/linechart/variable_name/dimension_y
 # or /visualization/map/variable_name/dimension_x/dimension_y 
-@visualization.route('/NetCDF/')
+@visualization.route('/NetCDF/<filename>')
 @login_required
-def get_NetCDF_information():
+def get_NetCDF_information(filename=''):
     # this part is used flat_input.nc for test
     # later I will connect to the DB and enable users 
     # to choose a file by themselves
 
     # get the current app location
     # app/visualization
-    APP_ROOT = os.path.dirname(os.path.abspath(__file__))
-    download_dir = APP_ROOT + '/tempData/'
-    filename = 'flat_input.nc'
+    app_root = os.path.dirname(os.path.abspath(__file__))
+    download_dir = app_root + '/tempData/'
     filename_path = download_dir + filename
     global netcdf_file_local_path
     netcdf_file_local_path = filename_path
@@ -105,45 +170,27 @@ def get_NetCDF_information():
         # to list all the attributes of a varible
         # netcdf_aim_file.variables[temp_variable_name].dimensions
         # this will return tuple, not list
-        if  'description' in netcdf_aim_file.variables[temp_variable_name].ncattrs():
+        temp_dim_handle = netcdf_aim_file.variables[temp_variable_name] 
+        temp_dims = list(temp_dim_handle.dimensions)
+        temp_dim_len = len(temp_dims)
+        if  'description' in temp_dim_handle.ncattrs():
             temp_variable_object = \
             NetCDFInformation(temp_variable_name, \
-                          len(netcdf_aim_file.variables[temp_variable_name].dimensions), \
-                          list(netcdf_aim_file.variables[temp_variable_name].dimensions), \
-                          netcdf_aim_file.variables[temp_variable_name].description)
+                              temp_dim_len, \
+                              temp_dims, \
+                              temp_dim_handle.description)
             variable_class_list.append(temp_variable_object)
         else:
             temp_variable_object = \
             NetCDFInformation(temp_variable_name, \
-                          len(netcdf_aim_file.variables[temp_variable_name].dimensions), \
-                          list(netcdf_aim_file.variables[temp_variable_name].dimensions))
+                              temp_dim_len, \
+                              temp_dims)
             variable_class_list.append(temp_variable_object)
 
     return render_template('visualization/netcdf_information.html', \
                            filename=filename, \
                            variable_name_list=variable_name_list, \
                            variable_class_list=variable_class_list)
-
-    # try netcdf_aim_file.variables['m_pp'].units to get the units of a variable
-    # try netcdf_aim_file.variables['m_pp'].dimensions to get the dimensions of a variable
-    # len(rootgrp.variables['m_pp'].dimensions) get length
-    # access value of a varible netcdf_aim_file.variables['I_lw'][1][2][3] dimensions are (time, northing, easting)
-
-    # get axis information
-    # lons = rootgrp.variables['northing'][:]
-    # lats = rootgrp.variables['easting'][:]
-    # time = rootgrp.variables['time'][:]
-
-# this function is used to create a csv file string from
-# two arrays, the first one is for y axis and the second one is for x axis
-def create_csv_file_string(y_array=[], y_axis_name='', x_array=[], x_axis_name=''):
-    # first row is for label
-    csv_string = x_axis_name + "," + y_axis_name + "\\n"
-    # y_array and x_array must be the same dimension
-    for count in range(len(y_array)):
-        csv_string = csv_string + str(x_array[count]) + "," + str(y_array[count]) + "\\n"
-    # print csv_string
-    return csv_string
     
 
 # this function is used to handle the last step of line chart visualizion
@@ -191,14 +238,19 @@ def line_chart_last_step(vis_param=''):
     # the string last character should be ) 
     # this exec_string does not consider masked value
     # therefore, if users choose to visualize m_pp there will be some bugs
-    exec_string = "for count in range(len(netcdf_aim_file.variables[\'"+vis_dimension+"\'])):\n    vis_dimension_data.append(netcdf_aim_file.variables[\'"+variable_name+"\']"
+    exec_string = "for count in range(len(netcdf_aim_file.variables[\'"+ \
+                  vis_dimension+ \
+                  "\'])):\n    vis_dimension_data.append(netcdf_aim_file.variables[\'" \
+                  +variable_name+"\']"
     for item in range(len(dimension_name_list)):
         if item == vis_dimension_index:
             exec_string = exec_string + "[count]"
         else:
             for temp_index in specify_dimension_index:
                 if item == temp_index:
-                    exec_string = exec_string + "[" + specify_dimension_chosen_index[specify_dimension_index.index(temp_index)] + "]"
+                    exec_string = exec_string + "[" + \
+                    specify_dimension_chosen_index[specify_dimension_index.index(temp_index)] \
+                    + "]"
     
     exec_string = exec_string + ")"
     # print exec_string
@@ -211,45 +263,51 @@ def line_chart_last_step(vis_param=''):
     for item in netcdf_aim_file.variables[vis_dimension]:
         vis_dimension_list.append(item)
     if bool_variable_x:
-        csv_string = create_csv_file_string(vis_dimension_list, vis_dimension, vis_dimension_data, variable_name)
+        csv_string = util.create_csv_file_string(vis_dimension_list, \
+                                                 vis_dimension, \
+                                                 vis_dimension_data, \
+                                                 variable_name)
     else:
-        csv_string = create_csv_file_string(vis_dimension_data, variable_name, vis_dimension_list, vis_dimension)
+        csv_string = util.create_csv_file_string(vis_dimension_data, \
+                                                 variable_name, \
+                                                 vis_dimension_list, \
+                                                 vis_dimension)
     return csv_string
 
 @visualization.route("/<path:path>")
 def relation(path):
     # get the current app location
     # app/visualization
-    APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+    app_root = os.path.dirname(os.path.abspath(__file__))
     # the file extension could only be csv now
     if path.endswith('.csv'):
-        # print APP_ROOT + "/tempData/" + path
-        return send_from_directory(APP_ROOT + "/tempData/", path)
+        # print app_root + "/tempData/" + path
+        filename_csv = path.rsplit("/",1)[1]
+        return send_from_directory(app_root + "/tempData/", filename_csv)
     elif path.endswith('.nc'):
-        # print APP_ROOT + "/tempData/" + path
-        return send_from_directory(APP_ROOT + "/tempData/", path)
+        # print app_root + "/tempData/" + path
+        filename_nc = path.rsplit("/",1)[1]
+        return send_from_directory(app_root + "/tempData/", filename_nc)
     elif path.endswith('.js'):
         # this line is used to get the js filename
-		filename_js = path.rsplit("/",1)[-1]
-		return send_from_directory(APP_ROOT + "/../templates/visualization/js", filename_js)
-    elif path.endswith(';'):
+		filename_js = path.rsplit("/",1)[1]
+		return send_from_directory(app_root + "/../templates/visualization/js", \
+                                   filename_js)
+    elif path.endswith('.png'):
+        # this line is used to get the png filename
+		filename_img = path.rsplit("/",1)[1]
+		return send_from_directory(app_root + "/../templates/visualization/img", \
+                                   filename_img)
+    # this used to obtain parameters for NetCDF visualization
+    elif path.endswith('NetCDFParameters'):
         # this line is used to get the js filename
-        vis_param = path.rsplit("/",1)[-1]
+        vis_param = path.rsplit("/",1)[1]
+        vis_param = util.replace_last(vis_param,'NetCDFParameters','')
         csv_string = line_chart_last_step(vis_param)
-        return render_template('visualization/netcdf_visualization_results.html', csv_string=csv_string)
+        return render_template('visualization/netcdf_visualization_results.html', \
+                               csv_string=csv_string)
         
 
-
-
-# this class record the variable dimension information
-class VariableDimensionInformation:
-    dimension_name = ''
-    dimension_size = 0
-    dimension_value_list = ''
-    def __init__(self, name, size, value_list):
-        self.dimension_name = name
-        self.dimension_size = size
-        self.dimension_value_list = value_list
 
 # this list contains the chosen item dimension names
 dimension_name_list = ''
@@ -258,8 +316,8 @@ chosen_y = ''
 variable_name = ''
 # TODO: this version just works when time is number
 # Lisa is creating some NetCDF, whose time is string
-@visualization.route("/NetCDF/visualization/lineChart/<variablename>/<xaxis>/<yaxis>")
-def line_chart_visualization(variablename='', xaxis='', yaxis=''):
+@visualization.route("/NetCDF/lineChart/<variablename>/<xaxis>/<yaxis>")
+def netcdf_line_chart_visualization(variablename='', xaxis='', yaxis=''):
     global netcdf_file_local_path
     global dimension_name_list
     global chosen_x
@@ -304,7 +362,6 @@ def line_chart_visualization(variablename='', xaxis='', yaxis=''):
            variablename=variablename, xaxis=xaxis, yaxis=yaxis, \
            dimension_information_list=dimension_information_list, \
            specify_dimension_list=specify_dimension_list);
-
 
 
 

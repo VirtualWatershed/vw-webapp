@@ -2,50 +2,22 @@
 {% block content %}
 {{ super() }}
 
-<style> /* set the local CSS */
-div.csv_metadata
-{
-	display:none;
-}
-</style>
+<h1>Visualization</h1>
 
-<!-- THIS IS USED TO GET METADATA OF CSV FILES-->
-<div class="csv_metadata">
-	{{ item_nameList|join(", ") }}
+<div>
+	<p>The current version of our system can visualize two kinds of files: CSV 
+	and NetCDF. The visualization is different from traditional visualization.
+	Users can interact with the visualization results (zoom in, zoom out, and 
+	download the chosen part data)</p>
+	<p>Please choose one of the following kinds of files that you want to 
+	visualize</p>
+<div>
+
+<div class="button">
+	<p><input type="button" onclick="location.href='/visualization/CSV/';" value="CSV" /></p>
+	<p><input type="button" onclick="location.href='/visualization/NetCDF/';" value="NetCDF" /></p>
 </div>
 
-<p class = "visParagraph">
-
-	<div id = "lineChartdiv"></div>
-
-	<div>
-		{% for name in item_nameList %}
-			<!-- THIS IS SKIP THE FIRST ELEMENT, COZ FIRST ELEMENT WILL BE X AXIS -->
-			{% if loop.index == 1 %}
-			
-			<!-- THIS IS USED TO SEPARATE ITEMS -->
-			{% elif loop.index is divisibleby 4 %}
-				<br>
-				<input type = "checkbox" id = "{{loop.index}}"  onClick="change(this)" checked>	
-				<label for="{{loop.index}}"> {{name}}</label>
-			{% else %}
-				<input type = "checkbox" id = "{{loop.index}}"  onClick="change(this)" checked>	
-				<label for="{{loop.index}}"> {{name}}</label>
-			{% endif %}
-		{% endfor %}
-	</div>
-
-	<div class = "confirmButton"></div>
-
-</p>
-
-<!-- VISUALIZATION PART -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script src="http://dygraphs.com/dygraph-combined.js"></script>
-<!-- THIS JS IS USED TO EXPORT ARRAY INTO CSV AND DOWNLOAD LOCALLY -->
-<script src="http://alasql.org/console/alasql.min.js"></script>
-<script src='js/lineChart.js' type='text/javascript'></script>
 
 
 {% endblock %}

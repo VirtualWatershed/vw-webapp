@@ -2,21 +2,39 @@
 {% block content %}
 {{ super() }}
 
+<style> /* set the local CSS */
+div.netcdfMetadata
+{
+	display:none;
+}
+</style>
 
-<script src="http://dygraphs.com/dygraph-combined.js"></script>
-</head>
+<!-- THIS IS USED TO GET METADATA OF NETCDF FILES-->
+<div class="netcdfMetadata">
+
+	<li class="csvString">
+		{{ csv_string }}
+	</li>
+
+</div>
+
 <body>
+
 <div id="graphdiv"></div>
-<script type="text/javascript">
-  g = new Dygraph(
 
-    // containing div
-    document.getElementById("graphdiv"),
+<div class="button">
+	<input type="button" onclick="screenShot()" value="Display Vis Screenshot" />
+	<input type="button" onclick="location.href='/visualization/';" value="Go Back" />
+</div>
 
-    "{{csv_string}}"
-
-  );
-</script>
 </body>
 
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://dygraphs.com/dygraph-combined.js"></script>
+<!-- THIS JS IS USED TO TAKE SCREENSHOT -->
+<script src='js/html2canvas.js' type='text/javascript'></script>
+<script src='js/netcdf_visualization_result.js' type='text/javascript'></script>
+
 {% endblock %}
+
+
