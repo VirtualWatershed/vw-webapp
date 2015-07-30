@@ -72,6 +72,7 @@ function gotoVisualization()
 	{
 		dimensionInformation = dimensionInformation + dimensionNameList[i] + ":" + dimensionIndexList[i] + ";";
 	}
+	dimensionInformation = dimensionInformation + "NetCDFParameters";
 	window.location.href = 'visualization/'+dimensionInformation;
 }
 

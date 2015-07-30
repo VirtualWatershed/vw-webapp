@@ -47,6 +47,34 @@ def getItemName(downloadDir='', filename='', itemNameList=[], rowOffset=0, rowOf
     inputFile.close()
     outputFile.close()
 
+# this function is used for csv interface
+# create a file from the input data
+# save it into tempData folder
+def csv_interface_parse_save(data='', download_dir=''):
+    temp_list = data.split('//')
+    # get and remove filename from list
+    filename = temp_list.pop(0)
+    # file content
+    # file_content = "/n".join(temp_list)
+    # write file content into a file
+    # no meta data should be in this input data
+    output_file = open(download_dir + filename, 'w+')
+    for line in temp_list:
+        line = line + '\n'
+        output_file.write(line)
+
+    # close file
+    output_file.close()
+
+# this function is used to grab all the labels of
+# a csv file. The csv file should not have any metadata
+def csv_interface_obtain_labels(filename='', download_dir=''):
+    input_file = open(download_dir + filename,'r')
+    csv_label_list = input_file.readline().replace('\n','').split(',')
+    input_file.close()
+    return csv_label_list
+    
+
 
 # this function is used to create a csv file string from
 # two arrays, the first one is for y axis and the second one is for x axis

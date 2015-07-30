@@ -35,18 +35,23 @@ div.netcdf_metadata
 </div>
 
 <h1>NetCDF Visualization</h1>
-<p>This section is for NetCDF file visualization. Users can choose a NetCDF file from XXX and choose to visualize the file with line chart or a map. If you want to visualize NetCDF file with line chart, the system will lead you to narrow down the dimension of the chosen variable into 2 dimensions. If you want to visualize NetCDF file with line chart, the system will lead you to narrow down the dimension of the chosen variable into 4 dimensions (lat, lon, another dimension, and variable values).</p>
+<p>This section is for NetCDF file visualization. Users can choose a NetCDF file from XXX and choose to visualize the file with line chart or a map. If you want to visualize NetCDF file with line chart, the system will lead you to narrow down the dimension of the chosen variable into 2 dimensions. If you want to visualize NetCDF file with map, the system will lead you to choose which attribute is latitude and which attribute is longitude of the chosen variable. Also the variable must have three attributes or four attributes for map visualization. For example, a variable named temperature has four attributes: lat, lon, time, and temperature. Users choose lat to be latitude and lon to be longtitude. The system will display time = 0 and all temperature value in a map. When users click one part of the map. The system will find the lat and lon of the chosen part and display temperature and time in a line chart.</p>
 
 <div>
 	<p>
-		<li style="font-weight: bold">Step One: choose a varible you want to visualize from the select box</li>
+		<li style="font-weight: bold">Step One: choose a variable you want to visualize from the select box</li>
 		<li class="variableSelectBox"></li>
 		<p class="variableDimensionInformation"></p>
 	</p>
 
 	<p>
 		<li style="font-weight: bold">Step Two: choose a visualization method</li>
-		This week line chart only, next week we will have map.
+		<li>
+			<select id="visualizationMethodSelectBox">
+				<option>line chart</option>
+				<option>map</option>
+			</select>
+		</li>
 	</p>
 
 	<p>
