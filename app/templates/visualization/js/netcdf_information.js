@@ -51,7 +51,11 @@ function updateParagraph()
 	// if users choose map
 	else if(visualizationMethodID == 1)
 	{
-		updateParagraphMap(clickItemID);
+		updateParagraphMapLatLon(clickItemID);
+	}
+	else if(visualizationMethodID == 2)
+	{
+		updateParagraphMapOther(clickItemID);
 	}
 }
 
@@ -85,7 +89,7 @@ function updateParagraphLineChart(clickItemID)
 	{
 		d3.select(".narrowDownInstructions").text(
 		variableName+" has "+variableDimensionCount+
-		" dimensivariableDimensionNameListons. Please choose two of them to \
+		" dimensions. Please choose two of them to \
 		visualize with line chart. The first is for x axis \
 		and the second is for y axis. Please make sure that \
         one of the x axis and y axis should be variable itself!"
@@ -127,7 +131,7 @@ function updateParagraphLineChart(clickItemID)
 
 // when users select item from select box and using map
 // visualization method
-function updateParagraphMap(clickItemID)
+function updateParagraphMapLatLon(clickItemID)
 {
 	variableName = netcdfVariableName[clickItemID];
 	// need to +1 because dimensions in NetCDF does not include variable value itself
@@ -194,10 +198,83 @@ function updateParagraphMap(clickItemID)
 			.append('input')
 			.attr("type","button")
 			.attr("value","Next Step")
-			.attr("onclick","gotoMap()");
+			.attr("onclick","gotoMapLatLon()");
 
 	}	
 }
+
+// when users select item from select box and using map
+// visualization method, and it doesn't have lat and lon as dimension
+function updateParagraphMapOther(clickItemID)
+{
+	variableName = netcdfVariableName[clickItemID];
+	// need to +1 because dimensions in NetCDF does not include variable value itself
+	// e.g. temperature has 3 dimensions: lat, lon, time. It does not include temperature 
+	variableDimensionCount = parseInt(document.getElementById(variableName+'DimensionCountID').innerHTML) + 1;
+
+	// get variable dimensions name list
+	variableDimensionNameList = getVariableDimensionsNameList();
+
+	// so strange, if I delete this part, step one paragraph will not update
+	// when I choose an item from step one select box
+	d3.select(".variableDimensionInformation").text(
+	"Name: "+variableName+
+	"; Dimension Count: "+variableDimensionCount+
+	"; Dimension List: "+variableDimensionNameList+
+	","+variableName
+    );
+
+
+	// if choose map
+	// map visualization can just handle 3D or 4D variables
+	if((variableDimensionCount!=3) && (variableDimensionCount!=4))
+	{
+		d3.select(".narrowDownInstructions").text(
+		variableName+" does not have 3 or 4 dimensions. \
+		We cannot visualize this variable with map");
+	}
+	else
+	{
+		d3.select(".narrowDownInstructions").text(
+		variableName+" has "+variableDimensionCount+
+		" dimensivariableDimensionNameListons. The first select box is used \
+        to confirm the variable for latitude information. The second select \
+        box is used to confirm the variable for longitude information."
+		);
+
+		// remove all the old buttons first and then add new ones
+		d3.selectAll(".buttonParagraph").remove();
+		d3.select(".buttonDiv").append('p')
+			.attr("class","buttonParagraph");
+
+		// set up selectBox for lat
+		var xSelectBox= d3.select(".buttonParagraph").append("select")
+			.attr("class","latSelect")
+			.attr("id","latSelectID");
+		for(var i=0 ; i<netcdfVariableName.length ; i++)
+		{
+			xSelectBox.append("option").text(netcdfVariableName[i]);
+		}
+		
+		// set up selectBox for lon
+		var ySelectBox= d3.select(".buttonParagraph").append("select")
+			.attr("class","lonSelect")
+			.attr("id","lonSelectID");
+		for(var i=0 ; i<netcdfVariableName.length ; i++)
+		{
+			ySelectBox.append("option").text(netcdfVariableName[i]);
+		}
+
+		// display button
+		var visualizeButton = d3.select(".buttonParagraph")
+			.append('input')
+			.attr("type","button")
+			.attr("value","Next Step")
+			.attr("onclick","gotoMapOther()");
+
+	}	
+}
+
 
 // get variable dimensions name list
 function getVariableDimensionsNameList()
@@ -265,7 +342,7 @@ function gotoLineChart()
 		
 }
 
-function gotoMap()
+function gotoMapLatLon()
 {
 	// get chosen item name
 	var xclickItemID = parseInt(document.getElementById('latSelectID').selectedIndex);
@@ -298,7 +375,45 @@ function gotoMap()
 		// /filename:variablename:3:x_dimension:y_dimension:NetCDFMapData or
 		// /filename:variablename:4:x_dimension:y_dimension:NetCDFMapData
 		window.location.href = '/visualization/NetCDF/'+variableName+":"+variableDimensionCount
-							   +":"+xItem+":"+yItem+'/2DMapVisualization';
+							   +":"+xItem+":"+yItem+'/2DMapVisualizationLatLon';
+	}
+		
+}
+
+function gotoMapOther()
+{
+	// get chosen item name
+	var xclickItemID = parseInt(document.getElementById('latSelectID').selectedIndex);
+	var yclickItemID = parseInt(document.getElementById('lonSelectID').selectedIndex);
+	var xItem;
+	var yItem;
+	var boolChooseSame = false;
+	variableDimensionCount = parseInt(document.getElementById(variableName+'DimensionCountID').innerHTML) + 1;	
+
+	xItem = netcdfVariableName[xclickItemID];
+	yItem = netcdfVariableName[yclickItemID];
+
+	
+	if(xclickItemID == yclickItemID)
+	{
+		boolChooseSame = true;
+	}
+	else
+	{
+		boolChooseSame = false;
+	}
+
+	// users must choose different dimensions for the line chart
+	if(boolChooseSame == true)
+	{
+		alert("Please choose different dimensions!");
+	}
+	else
+	{
+		// /filename:variablename:3:x_dimension:y_dimension:NetCDFMapData or
+		// /filename:variablename:4:x_dimension:y_dimension:NetCDFMapData
+		window.location.href = '/visualization/NetCDF/'+variableName+":"+variableDimensionCount
+							   +":"+xItem+":"+yItem+'/2DMapVisualizationOther';
 	}
 		
 }

@@ -46,10 +46,12 @@ div.netcdf_metadata
 
 	<p>
 		<li style="font-weight: bold">Step Two: choose a visualization method</li>
+		<p>The difference between map-lat-lon and map-other is that map-lat-lon means your netCDF file has latitude and longitude as dimensions directly. And map-other means your netCDF file does not 		have latitude and longitude as dimensions. However, the system can obtain these information from some variables. For example, netCDF file test.nc three dimensions: time, easting, northing. Also, 			test.nc has latitude and longitude as variables. The system can obtain latitude and longitude from input easting and northing information.</p>
 		<li>
 			<select id="visualizationMethodSelectBox">
 				<option>line chart</option>
-				<option>map</option>
+				<option>map-lat-lon</option>
+				<option>map-other</option>
 			</select>
 		</li>
 	</p>

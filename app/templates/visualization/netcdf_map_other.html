@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+{{ super() }}
+
+<style> /* set the local CSS */
+div.Metadata
+{
+	display:none;
+}
+
+
+#map-canvas 
+{
+    width: 1000px;
+    height: 1000px;
+}
+</style>
+
+<h1>NetCDF Map Visualization</h1>
+
+<!-- THIS IS USED TO GET METADATA OF NETCDF FILE-->
+<div class="Metadata">
+	<p class="variablename">
+		{{variablename}}
+	</p>
+
+	<p class="dimensionNum">
+		{{dimensionNum}}
+	</p>
+
+	<p class="lat">
+		{{lat}}
+	</p>
+
+	<p class="lon">
+		{{lon}}
+	</p>
+
+	<p class="filename">
+		{{filename}}
+	</p>	
+</div>
+
+<div class="mapVisualizationDiv">
+	<canvas id="myCanvas" width="1000" height="1000" style="border:1px solid #c3c3c3;">
+		Your browser does not support the HTML5 canvas tag.
+	</canvas>
+<div>
+
+<div class="button">
+	<button onclick="goToNextTime()">Next Time Overlay</button>
+</div>
+
+<div class="mapButton">
+	<p>Here is the google map with our 2D map</p>
+	<button onclick="removeOverlay()">Remove overlay</button>
+	<button onclick="addOverlay()">Restore overlay</button>
+</div>
+
+<div id="map-canvas">
+
+</div>
+
+
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<!-- THIS JS IS USED TO TAKE SCREENSHOT -->
+<script src='js/html2canvas.js' type='text/javascript'></script>
+<!-- THIS JS IS USED FOR GOOGLE MAP -->
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
+<!-- THIS JS IS USED TO PLACE CANVAS IN GOOGLE MAP -->
+<script src='js/canvas_layer.js' type='text/javascript'></script>
+<script src='js/netcdf_map_other.js' type='text/javascript'></script>
+
+{% endblock %}

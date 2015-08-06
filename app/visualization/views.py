@@ -339,7 +339,7 @@ def relation(path):
         
         app_root = os.path.dirname(os.path.abspath(__file__))
         download_dir = app_root + '/tempData/'
-        # this part for test only
+
         filename = path.split(':')[0]
         variable_name = path.split(':')[1]
         # open netcdf file
@@ -361,8 +361,8 @@ def relation(path):
         # for 4D we can also use slider. e.g. temperature is a 4D variable
         # with (lat, lon, time, temperture)
         json_projects = []
-        # TODO find out which dimension is x and which is y
-        # and use different for loop if it is 4D, now only it works for 3D
+
+        # use different for loop if it is 4D, now only it works for 3D
         # now the two loops are the same
         if int(dimension_num) == 3:
             # need to figure out which dimension is at first
@@ -426,8 +426,224 @@ def relation(path):
 
             json_projects = json.dumps(json_projects)
         return json_projects
+    # all the data about certain variable in a NetCDF file will be
+    # transfered as json type data, lat and lon as variables
+    # and they are decided by the same dimensions
+    elif path.endswith('NetCDFMapDataOther'):
+        # /filename:variablename:3:x_dimension:y_dimension:NetCDFMapDataOther or
+        # /filename:variablename:4:x_dimension:y_dimension:NetCDFMapDataOther
+        
+        app_root = os.path.dirname(os.path.abspath(__file__))
+        download_dir = app_root + '/tempData/'
+
+        filename = path.split(':')[0]
+        variable_name = path.split(':')[1]
+        # open netcdf file
+        netcdf_file_local_path = download_dir + filename
+        netcdf_aim_file = Dataset(netcdf_file_local_path, "r")
+        # grab dimension name list
+        dimension_name_list = list(netcdf_aim_file.variables[variable_name].dimensions)
+        dimension_num = path.split(':')[2]
+        lat = path.split(':')[3]
+        lon = path.split(':')[4]
+        lon_length = len(netcdf_aim_file.variables[lon])
+        lat_length = len(netcdf_aim_file.variables[lat])
+        lon_dimension_list = list(netcdf_aim_file.variables[lon].dimensions)
+        lat_dimension_list = list(netcdf_aim_file.variables[lat].dimensions)
+        # create json to store the variable data
+        # and because we will visualize data on a map
+        # the visualization data will be 3D (use 2D as x and y and display the
+        # last dimension the data on a map)
+        # or will be 4D (use 2D data as x and y, when users click on a element,
+        # then display the the left 2D in a line chart)
+        # for 4D we can also use slider. e.g. temperature is a 4D variable
+        # with (lat, lon, time, temperture)
+        # for 3D we won't use json_projects_final
+        # for 4D we will use json_projects_final for the final json outputs
 
 
+        # use different for loop if it is 4D, now only it works for 3D
+        # now the two loops are almost the same
+        if int(dimension_num) == 3:
+            json_projects = []
+            first_dimension_length =  len(netcdf_aim_file.dimensions[dimension_name_list[0]])
+            second_dimension_length =  len(netcdf_aim_file.dimensions[dimension_name_list[1]])
+
+            for count_y in range(0,first_dimension_length):
+                temp_array = ''
+                for count_x in range(0,second_dimension_length):
+                    # python dictionary does not like array in it, so have to use string
+                    temp_array = temp_array + str(netcdf_aim_file.variables[variable_name][count_y][count_x]) +","
+                # remove the last ,
+                # don't know why temp_array.rstrip(',') does not work
+                temp_change_str_into_list = temp_array.split(',')
+                temp_change_str_into_list.pop()
+                temp_array = ','.join(temp_change_str_into_list)
+                json_projects.append({"data" : temp_array})
+
+            json_projects = json.dumps(json_projects)
+
+            return json_projects
+
+        elif int(dimension_num) == 4:
+            '''
+            4D json file will be like this:
+            {
+                "min_value":xxx,
+                "max_value":xxx,
+                "x_num":xxx,
+                "y_num":xxx,
+                "max_lat":xxx,
+                "max_lon":xxx,
+                "min_lat":xxx,
+                "min_lon":xxx,
+                "time":['2014-1-1',...,],
+                "location":[{"lat":123},
+                            {"lon":234},
+                            {"x_location":xxx},
+                            {"y_location":xxx},
+                            {"data":[1,2,3,4]}
+                           ]
+            }
+            x_num means how many elements we have alone x-axis
+            y_num means how many elements we have alone y-axis
+            (x_location,y_location) is the coordinate in the 2D map
+            min_value is the minimum value of all location "data"
+            time should have as many elements as data
+            which means we can find data timestamp from time array
+            !!!!
+            max_lat,max_lon,min_lat,min_lon are used to locate the 2D map
+            in google map. I know this is not right if the data is not rectangular
+            !!!!
+            '''
+            # NOTICE!!!!!
+            # for this version the lat and lon should be decided by the same two dimensions
+            # and lat_lon_first_dimension_length is for 2D map y-axis
+            # and lat_lon_second_dimension_length is for 2D map x-axis
+            lat_lon_first_dimension_length = len(netcdf_aim_file.dimensions[lon_dimension_list[0]])
+            lat_lon_second_dimension_length = len(netcdf_aim_file.dimensions[lon_dimension_list[1]])
+            # other_dimension_name is for the dimension that is not decided lat and lon
+            other_dimension_name = ''
+            for item in dimension_name_list:
+                if item not in lon_dimension_list:
+                    other_dimension_name = item
+            other_dimension_length =  len(netcdf_aim_file.dimensions[other_dimension_name])
+            # create executable string for 4D to find out the order of each dimension
+            # two of the dimensions are variable itself and "another one"
+            # for the "another one" we can use 0 to specify its value for now
+            exec_string='temp_array.append(netcdf_aim_file.variables[variable_name]'
+            lat_lon_first_dimension_index = dimension_name_list.index(lon_dimension_list[0])
+            lat_lon_second_dimension_index = dimension_name_list.index(lon_dimension_list[1])
+            for count in range(3):
+                if count == lat_lon_first_dimension_index:
+                    exec_string  = exec_string + '[count_lat_lon_first]'
+                elif count == lat_lon_second_dimension_index:
+                    exec_string  = exec_string + '[count_lat_lon_second]'
+                else:
+                    exec_string = exec_string + '[count_other]'
+            # .item() is used to convert numpy.float into float
+            exec_string = exec_string + '.item())'
+            # print exec_string
+            json_projects = {}
+            json_projects_location = []
+            json_projects_final = {}
+            # min_value and max_value are used to record the min and max value of all the data
+            min_value = 9e32
+            max_value = -9e32
+            min_lat = 9e32
+            max_lat = -9e32
+            min_lon = 9e32
+            max_lon = -9e32
+            for count_lat_lon_first in range(0,lat_lon_first_dimension_length):
+                for count_lat_lon_second in range(0,lat_lon_second_dimension_length):
+                    temp_array = []
+                    json_projects = {}
+                    for count_other in range(0,other_dimension_length):
+                        # exec_string should be something like this
+                        # temp_array.append(netcdf_aim_file.variables[variable_name][count_other][count_lat_lon_first][count_lat_lon_second].item())
+                        exec exec_string
+                        if min_value > temp_array[count_other]:
+                            min_value = temp_array[count_other]
+                        if max_value < temp_array[count_other]:
+                            max_value = temp_array[count_other] 
+                    json_projects['data'] = temp_array
+                    # lat and lon should be decided by two dimensions in this version application
+                    # .item() is used to convert numpy.float into float
+                    json_projects['lat'] = (netcdf_aim_file.variables[lat][count_lat_lon_first][count_lat_lon_second]).item()
+                    json_projects['lon'] = netcdf_aim_file.variables[lon][count_lat_lon_first][count_lat_lon_second].item()
+                    if min_lat > json_projects['lat']:
+                        min_lat = json_projects['lat']
+                    if max_lat < json_projects['lat']:
+                        max_lat = json_projects['lat']
+                    if min_lon > json_projects['lon']:
+                        min_lon = json_projects['lon']
+                    if max_lon < json_projects['lon']:
+                        max_lon = json_projects['lon']
+                    json_projects['x_location'] = count_lat_lon_second
+                    json_projects['y_location'] = count_lat_lon_first
+                    json_projects_location.append(json_projects)
+
+            # print type(min_value)
+            # print type(max_value)
+            # print min_value
+            # print max_value
+
+            # this is used to store other dimension information
+            temp_array = []
+            for count_other in range(0,other_dimension_length):
+                temp_array.append(netcdf_aim_file.variables[other_dimension_name][count_other].item())
+
+            # add location
+            json_projects_final['location'] = json_projects_location
+
+            json_projects_final['y_num'] = lat_lon_first_dimension_length
+            json_projects_final['x_num'] = lat_lon_second_dimension_length
+            json_projects_final['min_value'] = min_value
+            json_projects_final['max_value'] = max_value
+            # record the min and max of lat and lon
+            json_projects_final['min_lon'] = min_lon
+            json_projects_final['min_lat'] = min_lat
+            json_projects_final['max_lon'] = max_lon
+            json_projects_final['max_lat'] = max_lat
+
+            # add another dimension
+            json_projects_final[other_dimension_name] = temp_array
+            json_projects_final = json.dumps(json_projects_final)
+
+
+            return json_projects_final
+            #json_projects_location = json.dumps(json_projects_location)
+            #return json_projects_location
+'''
+json_projects = {}
+json_projects_location = []
+json_projects_final = {}
+# min_value and max_value are used to record the min and max value of all the data
+min_value = 9e32
+max_value = -9e32
+for count_lat_lon_first in range(0,lat_lon_first_dimension_length):
+    for count_lat_lon_second in range(0,lat_lon_second_dimension_length):
+        json_projects = {}
+        temp_array = []
+        for count_other in range(0,other_dimension_length):
+            # exec_string should be something like this
+            # temp_array.append(netcdf_aim_file.variables[variable_name][count_other][count_lat_lon_first][count_lat_lon_second].item())
+            exec exec_string
+            if temp_array[count_other] == 292.1568603515625:
+                print 'first='+str(count_lat_lon_first)+', and second='+str(count_lat_lon_second)
+            if min_value > temp_array[count_other]:
+                min_value = temp_array[count_other]
+            if max_value < temp_array[count_other]:
+                max_value = temp_array[count_other] 
+        json_projects['data'] = temp_array
+        # lat and lon should be decided by two dimensions in this version application
+        # .item() is used to convert numpy.float into float
+        json_projects['lat'] = (netcdf_aim_file.variables[lat][count_lat_lon_first][count_lat_lon_second]).item()
+        json_projects['lon'] = netcdf_aim_file.variables[lon][count_lat_lon_first][count_lat_lon_second].item()
+        json_projects['x_location'] = count_lat_lon_second
+        json_projects['y_location'] = count_lat_lon_first
+        json_projects_location.append(json_projects)
+'''
 
 # this list contains the chosen item dimension names
 dimension_name_list = ''
@@ -484,19 +700,20 @@ def netcdf_line_chart_visualization(variablename='', xaxis='', yaxis=''):
            specify_dimension_list=specify_dimension_list)
 
 # this part is for netcdf map visualization
-@visualization.route('/NetCDF/<map_information>/2DMapVisualization')
+# with lat and lon as dimensions
+@visualization.route('/NetCDF/<map_information>/2DMapVisualizationLatLon')
 @login_required
-def netcdf_map_visualization(map_information=''):
+def netcdf_map_visualization_lat_lon(map_information=''):
     # TODO I need to remove the global variable filename
     global netcdf_filename
     # map_information formats should be:
-    # /filename:variablename:3:x_dimension:y_dimension:NetCDFMapData or
-    # /filename:variablename:4:x_dimension:y_dimension:NetCDFMapData
+    # /filename:variablename:3:x_dimension:y_dimension:NetCDFMapDataLatLon or
+    # /filename:variablename:4:x_dimension:y_dimension:NetCDFMapDataLatLon
     # However the format are
-    # /variablename:3:x_dimension:y_dimension:NetCDFMapData or
-    # /variablename:4:x_dimension:y_dimension:NetCDFMapData
+    # /variablename:3:x_dimension:y_dimension:NetCDFMapDataLatLon or
+    # /variablename:4:x_dimension:y_dimension:NetCDFMapDataLatLon
     map_information_list = map_information.split(':')
-    return render_template('visualization/netcdf_map.html', variablename=map_information_list[0],\
+    return render_template('visualization/netcdf_map_lat_lon.html', variablename=map_information_list[0],\
                            dimensionNum=map_information_list[1],lat=map_information_list[2],\
                            lon=map_information_list[3], filename=netcdf_filename)
 '''
@@ -505,5 +722,27 @@ def netcdf_map_visualization(map_information=''):
                            lon=map_information_list[4])
 '''
 
+# this part is for netcdf map visualization
+# without lat and lon as dimensions
+@visualization.route('/NetCDF/<map_information>/2DMapVisualizationOther')
+@login_required
+def netcdf_map_visualization_other(map_information=''):
+    # TODO I need to remove the global variable filename
+    global netcdf_filename
+    # map_information formats should be:
+    # /filename:variablename:3:x_dimension:y_dimension:NetCDFMapDataOther or
+    # /filename:variablename:4:x_dimension:y_dimension:NetCDFMapDataOther
+    # However the format are
+    # /variablename:3:x_dimension:y_dimension:NetCDFMapDataOther or
+    # /variablename:4:x_dimension:y_dimension:NetCDFMapDataOther
+    map_information_list = map_information.split(':')
+    return render_template('visualization/netcdf_map_other.html', variablename=map_information_list[0],\
+                           dimensionNum=map_information_list[1],lat=map_information_list[2],\
+                           lon=map_information_list[3], filename=netcdf_filename)
+'''
+    return render_template('visualization/netcdf_map.html', filename=map_information_list[0], variablename=map_information_list[1],\
+                           dimensionNum=map_information_list[2],lat=map_information_list[3],\
+                           lon=map_information_list[4])
+'''
 
 
