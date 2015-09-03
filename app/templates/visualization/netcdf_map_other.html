@@ -42,13 +42,17 @@ div.Metadata
 </div>
 
 <div class="mapVisualizationDiv">
-	<canvas id="myCanvas" width="1000" height="1000" style="border:1px solid #c3c3c3;">
+	<canvas class='mapCanvas' id="myCanvas" style="border:1px solid #c3c3c3;">
 		Your browser does not support the HTML5 canvas tag.
 	</canvas>
 <div>
 
 <div class="button">
-	<button onclick="goToNextTime()">Next Time Overlay</button>
+	<button class='playButton'>Play</button>
+	<button class='pauseButton'>Pause</button>
+	<input type='range' class='timeRange' onchange='rangeChange(this.value)' style="width:300px; height:20px;">
+	<p class='frameInformation'><p>
+
 </div>
 
 <div class="mapButton">
