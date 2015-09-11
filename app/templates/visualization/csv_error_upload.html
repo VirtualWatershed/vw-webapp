@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+{{ super() }}
+
+<h1>CSV Visualization</h1>
+
+<div>
+	<p>Sorry, your upload file's extension is not ".csv"</p>
+	<p>Please click the button and go back to upload page</p>
+<div>
+
+<div class="button">
+	<p><input type="button" onclick="location.href='/visualization/CSV/upload_page';" value="Back to upload page" /></p>
+</div>
+
+
+
+{% endblock %}

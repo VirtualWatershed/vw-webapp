@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+{{ super() }}
+
+
+<!-- THIS IS USED TO GET METADATA OF CSV FILES-->
+<div class="csvMetadata">
+	{{ item_name_list|join(", ") }}
+</div>
+<div class="csvFileName">
+	{{ filename }}
+</div>
+
+<div class = "visParagraph">
+
+	<div id = "lineChartdiv"></div>
+
+	<div>
+		{% for name in item_name_list %}
+			<!-- THIS IS SKIP THE FIRST ELEMENT, COZ FIRST ELEMENT WILL BE X AXIS -->
+			{% if loop.index == 1 %}
+			
+			<!-- THIS IS USED TO SEPARATE ITEMS -->
+			{% elif loop.index is divisibleby 4 %}
+				<br>
+				<input type = "checkbox" id = "{{loop.index}}"  onClick="change(this)" checked>	
+				<label for="{{loop.index}}"> {{name}}</label>
+			{% else %}
+				<input type = "checkbox" id = "{{loop.index}}"  onClick="change(this)" checked>	
+				<label for="{{loop.index}}"> {{name}}</label>
+			{% endif %}
+		{% endfor %}
+	</div>
+
+	<div class = "Buttons">
+		<input type="button" onclick="downloadData()" value="downloadCSV" />
+		<input type="button" onclick="screenShot()" value="Display Vis Screenshot" />
+		<input type="button" onclick="location.href='/visualization/';" value="Go Back" />
+	</div>
+
+
+</div>
+
+<!-- VISUALIZATION PART -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://dygraphs.com/dygraph-combined.js"></script>
+<!-- THIS JS IS USED TO EXPORT ARRAY INTO CSV AND DOWNLOAD LOCALLY -->
+<script src="http://alasql.org/console/alasql.min.js"></script>
+<!-- THIS JS IS USED TO TAKE SCREENSHOT -->
+<script src='js/html2canvas.js' type='text/javascript'></script>
+<script src='js/csv_line_chart.js' type='text/javascript'></script>
+
+{% endblock %}
