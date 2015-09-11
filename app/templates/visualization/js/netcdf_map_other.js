@@ -3,7 +3,8 @@ var dimensionNumValue = getMetaData('dimensionNum');
 var latValue = getMetaData('lat');
 var lonValue = getMetaData('lon');
 var filenameValue = getMetaData('filename');
-
+// the last two parameters 0:1 means range(0:1), which means first frame, 0 is the start position
+// and 1 is the end position
 var rawData = httpGet('/visualization/'+filenameValue+':'+variablenameValue+':'+dimensionNumValue+':'+latValue+':'+lonValue+':NetCDFMapDataOther');
 // convert text into json
 rawData = JSON.parse(rawData);
@@ -15,6 +16,14 @@ var maxValue = rawData['max_value'];
 var minValue = rawData['min_value'];
 var dataY = rawData['y_num'];
 var dataX = rawData['x_num'];
+
+// set up the canvas size
+var canvasWidth = 5*parseInt(dataX);
+var canvasHeight = 5*parseInt(dataY);
+d3.select('.mapCanvas')
+	.attr('width',canvasWidth)
+	.attr('height',canvasHeight);
+
 // this timeStamp should be other_dimension_name
 var timeStamp = rawData['time'];
 // for test
@@ -36,8 +45,7 @@ for(var i=0 ; i<dataY ; i++)
 var canvasHandle = document.getElementById("myCanvas");
 var canvas2DContext = [];
 var color;
-var canvasWidth = d3.select('#myCanvas').attr('width');
-var canvasHeight = d3.select('#myCanvas').attr('height');
+
 var width=canvasWidth/dataX;
 var height=canvasHeight/dataY;
 // TODO this part only works when lat and lon together are rectangular
@@ -141,11 +149,40 @@ function httpGet(theUrl)
 	return xmlhttp.responseText;   
 }
 
+var intervalID;
+d3.select(".playButton").attr('onclick','playFunction()');
+d3.select(".pauseButton").attr('onclick','pauseFunction()');
+
+function playFunction()
+{
+	intervalID=setInterval(function(){goToNextTime()},1000);
+}
+function pauseFunction()
+{
+	clearInterval(intervalID);
+}
+
+// this part is used to set up range
+maxIndex = timeStamp.length;
+var timeRangeHandle = d3.select('.timeRange')
+						.attr('min',0)
+						.attr('max',maxIndex-1);
+function rangeChange(value)
+{
+	pauseFunction();
+	timeCount = parseInt(value)-1;
+	playFunction();
+	// don't know why this does not updated the range!!!!!!!!!!!!!!!!!!!!!!!!!
+	// pauseFunction();
+}
+
+// initialize frame information
+d3.select(".frameInformation").text("The current time is "+timeStamp[timeCount]);
 // change 2D map based on the 
 function goToNextTime()
 {
-	MaxIndex = rawData['time'].length;
-	timeCount = (timeCount+1) % MaxIndex;
+	maxIndex = timeStamp.length;
+	timeCount = (parseInt(timeCount)+1) % maxIndex;
 	canvas2DContext = [];
 	mapArray = [];
 
@@ -175,26 +212,26 @@ function goToNextTime()
 			canvas2DContext[i].fillRect(width*i,height*m,width,height);
 		}
 	}
-// changing overlay on a map is not working now
-/*
+
+	// update time frame information
+	d3.select(".frameInformation").text("The current time is "+timeStamp[timeCount]);
+	// update range value
+	d3.select('.timeRange').attr('value',parseInt(timeCount));
+	
+	// this part is used to update the overlay
 	// clear the overlay first
 	imgOverlay.setMap(null);
 	// add a new overlay
-	// should create map when myCanvas is fully done
-    html2canvas(document.getElementById("myCanvas"), 
-	{
-		//onrendered: function(canvas) {
-		function(canvas) {
-			imgURL = canvas.toDataURL();			
-		}
-		//}
-	});	
+	imgURL = document.getElementById("myCanvas").toDataURL();
+
 	imgOverlay = new google.maps.GroundOverlay(
 		imgURL,
 		imageBounds);
 	imgOverlay.setMap(map);
-*/
+
 }
+
+
 
 //function convertValueIntoColor(inputValue, maxArrayValue)
 function convertValueIntoColor(inputValue, maxArrayValue, minArrayValue)
@@ -255,9 +292,9 @@ function convertValueIntoColor(inputValue, maxArrayValue, minArrayValue)
 function getMetaData(metaDataClass)
 {
 	var variableDimensionNameListString = d3.select("."+metaDataClass).text();
-	variableDimensionNameListString = variableDimensionNameListString.replace('	','');
-	variableDimensionNameListString = variableDimensionNameListString.replace(/(\r\n|\n|\r)/gm,'');
 	variableDimensionNameListString = variableDimensionNameListString.replace(/ /g,'');
+	variableDimensionNameListString = variableDimensionNameListString.replace(/(\r\n|\n|\r)/gm,'');
+	variableDimensionNameListString = variableDimensionNameListString.replace(/	/g,'');
 	return variableDimensionNameListString;
 }
 
