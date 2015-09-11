@@ -2,9 +2,4 @@
 *.sqlite
 *.swp
 *.conf
-migrations/*
-venv/
-default.conf
-wcwave_adaptors
-uploads
-downloads/
+
