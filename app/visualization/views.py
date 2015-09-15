@@ -476,8 +476,6 @@ def relation(path):
             aim_array = [float(i) for i in aim_array]
             # convert list into numpy array
             aim_array = numpy.asarray(aim_array)
-            # print 'aaaaaaaaaaaaaaaaaa'
-            # print aim_array
             units = ''
             # for this part only we used variable name as standard name
             standard_name = variablename
@@ -485,12 +483,10 @@ def relation(path):
             # create the class object
             temp_object = FrequenceDistributionInformation(aim_array, section_results_number, tab_name_list, units, standard_name)
             class_information_list.append(temp_object)
-        # print 'bbbbbbbbbbbbbb'
-        # print class_information_list[0].tab_name_list
-        # print class_information_list[0].section_results_number
-
+        # this is used to compromise with my own part updates
+        load_number = element_num
         return render_template('visualization/netcdf_visualization_histogram_results.html', \
-               variablename=variablename, class_information_list=class_information_list)
+               variablename=variablename, class_information_list=class_information_list, load_number=load_number)
 
     # all the data about certain variable in a NetCDF file will be
     # transfered as json type data
@@ -660,11 +656,12 @@ def relation(path):
                 "min_lat":xxx,
                 "min_lon":xxx,
                 "time":['2014-1-1',...,],
-                "location":[{"lat":123},
-                            {"lon":234},
-                            {"x_location":xxx},
-                            {"y_location":xxx},
-                            {"data":[1,2,3,4]}
+                "location":[{"lat":123,
+                            "lon":234,
+                            "x_location":xxx,
+                            "y_location":xxx,
+                            "data":[1,2,3,4]},
+                             {...}
                            ]
             }
             x_num means how many elements we have alone x-axis
@@ -834,51 +831,109 @@ def netcdf_line_chart_visualization(variablename='', xaxis='', yaxis=''):
            specify_dimension_list=specify_dimension_list)
 
 # this part is used to handle histogram
-@visualization.route("/NetCDF/histogram/<variablename>/<xaxis>/<sectionNumber>/histogramVisualization")
-def netcdf_histogram_visualization(variablename='', xaxis='', sectionNumber='1'):
+# start means the start frame of the variable
+# end means the end frame of the variable
+@visualization.route("/NetCDF/histogram/<variablename>/<xaxis>/<sectionNumber>/<start>/<end>/histogramVisualization")
+def netcdf_histogram_visualization(variablename='', xaxis='', start='0', end='0', sectionNumber='1'):
     global netcdf_file_local_path
     # open netcdf file
     netcdf_aim_file = Dataset(netcdf_file_local_path, "r")
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!! need to dynamically obtain data, not just first dimension
-    #aim_array = netcdf_aim_file.variables[variablename][0].flatten()
     
     element_num = len(netcdf_aim_file.dimensions[xaxis])
     section_num = int(sectionNumber)
     class_information_list = []
     temp_dim_handle = netcdf_aim_file.variables[variablename]
-    # set up for loop to create a list of class
-    for count in range(0,element_num):
-        # initialize these array and lists
-        section_results_number = []
-        tab_name_list = []
-        aim_array = temp_dim_handle[count].flatten()
-        units = ''
-        standard_name = ''
-        util.sort_section_number(aim_array, section_num, section_results_number, tab_name_list)
-        # .ncattrs() is used to list all the attributes of the chosen variable
-        if  'units' in temp_dim_handle.ncattrs():
-            units = temp_dim_handle.units
-        if  'standard_name' in temp_dim_handle.ncattrs():
-            standard_name = temp_dim_handle.standard_name
-        temp_object = FrequenceDistributionInformation(aim_array, section_results_number, tab_name_list, units, standard_name)
-        class_information_list.append(temp_object)
-
-    return render_template('visualization/netcdf_visualization_histogram_results.html', \
-           variablename=variablename, class_information_list=class_information_list)
+    start_frame = int(start)
+    end_frame = int(end)
+    # load_num means how many frames to visualize each time
+    load_number = 5
+    # if start==end==0 means this is the first step
+    if start_frame==0 and end_frame==0:
+        if element_num <= load_number:
+            # element_num-1 because the index starts from 0
+            end_frame = element_num - 1
+        else:
+            end_frame = load_number
+        # set up for loop to create a list of class
+        # for count in range(0,element_num):
+        for count in range(start_frame,end_frame):
+            # record time
+            # start_time = time.time()
+            # initialize these array and lists
+            section_results_number = []
+            tab_name_list = []
+            # TODO need to dynamically obtain data, not just first dimension
+            aim_array = temp_dim_handle[count].flatten()
+            units = ''
+            standard_name = ''
+            util.sort_section_number(aim_array, section_num, section_results_number, tab_name_list)
+            # .ncattrs() is used to list all the attributes of the chosen variable
+            if  'units' in temp_dim_handle.ncattrs():
+                units = temp_dim_handle.units
+            if  'standard_name' in temp_dim_handle.ncattrs():
+                standard_name = temp_dim_handle.standard_name
+            temp_object = FrequenceDistributionInformation(aim_array, section_results_number, tab_name_list, units, standard_name)
+            class_information_list.append(temp_object)
+            # print('--- %s second ---' % (time.time() - start_time))
+    
+        return render_template('visualization/netcdf_visualization_histogram_results.html', \
+               variablename=variablename, class_information_list=class_information_list, \
+               load_number=load_number, element_num=element_num)
+    # if not the first step, we need return a json file contains all the information to visualize
     '''
-    section_num = int(sectionNumber)
-    # bar chart y values
-    section_results_number = []
-    # bar chart x tabs
-    tab_name_list = []
-    # TODO need to have name, title, units
+    json file is like this:
+    {
+        "timestamp":[
+             {
+                 "standard_name": "XXX",
+                 "units": "YYY",
+                 "section_results_number":[1,2,3],
+                 "tab_name_list": ['aatobb','bbtocc']
+             },
+             {}
+        ]
+    }
+    information is based on time, this means json[y] is the information for timestamp y
+    '''    
+    # for this part, start and end should be all less than element_num
+    # and this is controlled in netcdf_histogram_visualization_results.js
+    # I don't know why elif does not work
+    # elif start_frame<element_num and end_frame<=element_num:
+    if start_frame<element_num and end_frame<=element_num:
+        json_final = {}
+        json_timestamp = []
+        # !!!!!!!!!!!!!!!!!!!!
+        # set up for loop to create a json file
+        for count in range(start_frame,end_frame):
+            # record time
+            # start_time = time.time()
+            # initialize these array and lists
+            section_results_number = []
+            tab_name_list = []
+            json_projects = {}
+            # TODO need to dynamically obtain data, not just first dimension
+            aim_array = temp_dim_handle[count].flatten()
+            units = ''
+            standard_name = ''
+            util.sort_section_number(aim_array, section_num, section_results_number, tab_name_list)
+            # .ncattrs() is used to list all the attributes of the chosen variable
+            if  'units' in temp_dim_handle.ncattrs():
+                units = temp_dim_handle.units
+            if  'standard_name' in temp_dim_handle.ncattrs():
+                standard_name = temp_dim_handle.standard_name
 
-    # 
-    util.sort_section_number(aim_array, section_num, section_results_number, tab_name_list)
-    return render_template('visualization/netcdf_visualization_histogram_results.html', \
-           variablename=variablename, section_results_number=section_results_number, \
-           tab_name_list=tab_name_list)
-    '''
+            json_projects['units'] = units
+            json_projects['standard_name'] = standard_name
+            json_projects['section_results_number'] = section_results_number
+            json_projects['tab_name_list'] = tab_name_list
+            json_timestamp.append(json_projects)
+
+        json_final['timestamp'] = json_timestamp
+        json_final = json.dumps(json_final)
+        return json_final
+    else:
+        # we should return an error page is start and end is bigger than element_num
+        return 'error'
 
 # I am really confused why return render_template does not work in the post request
 @visualization.route("/Histogram/3DVisualizationApplication", methods=['POST'])

@@ -5,8 +5,11 @@ var yAxisArray = yAxisArrayStr.split(',');
 // convert y from str into float
 yAxisArray = changeStrIntoFloatArray(yAxisArray);
 
+var variableName = getMetaData('variableName');
+
 var units = getMetaData('units0');
 var standardName = getMetaData('standardName0');
+var loadNum = getMetaData('loadNum');
 
 // this variable records how many elements in the list
 var totalNum = parseInt(getMetaData('elementNum'));
@@ -19,14 +22,42 @@ var line;
 
 d3.select('#histogram').attr('width',80*yAxisArray.length);
 
+
 // run the function when dom is fully loaded
 // and then draw a bar graph
 // the library is from http://www.rgraph.net/docs/bar.html
 window.onload = function ()
 {
+	drawBarLineGraph();
+/*
+	if(totalNum > loadNum)
+	{
+		drawBarLineGraph();
+		var rawData;
+		for(i=loadNum ; i<=totalNum ; i++)
+		{
+			var startStr = i.toString();
+			var endStr = (parseInt(i)+1).toString();
+			// TODO the xaxis should be dynamically added not hard code 'time', the same for section number not 10
+			rawData = httpGet('/visualization/NetCDF/histogram/'+variableName+'/time/10/'+startStr+'/'+endStr+'/histogramVisualization');
+			rawData = JSON.parse(rawData);
+			d3.select('.netcdfMetadata').append('p')
+					.attr('class','xAxisArray'+i)
+					.text('1,2,3,4,5,6,7,8,9,0');
+			d3.select('.netcdfMetadata').append('p')
+					.attr('class','yAxisArray'+i)
+					.text('10,9,8,7,6,5,4,3,2,1');
 
-	drawBarLineGraph()
-
+		}
+							
+	}
+	// else
+	// the we can visualize them for once
+	else
+	{
+		drawBarLineGraph();
+	}
+*/
 };
 
 function drawBarLineGraph()
@@ -93,6 +124,7 @@ function onClickBarLineChart()
 //	alert('hello');
 }
 
+var loadDataTimes = parseInt(loadNum);
 function nextTimeStampDistribution()
 {
 	// erase the current bar chart 
@@ -127,6 +159,23 @@ function nextTimeStampDistribution()
 	// standardName = getMetaData('standardName'+currentNum);
 
 	drawBarLineGraph();
+	var rawData;
+	if(loadDataTimes<=totalNum)
+	{
+		var startStr = loadDataTimes.toString();
+		var endStr = (parseInt(loadDataTimes)+1).toString();
+		// TODO the xaxis should be dynamically added not hard code 'time', the same for section number not 10
+		rawData = httpGet('/visualization/NetCDF/histogram/'+variableName+'/time/10/'+startStr+'/'+endStr+'/histogramVisualization');
+		rawData = JSON.parse(rawData);
+		d3.select('.netcdfMetadata').append('p')
+				.attr('class','xAxisArray'+startStr)
+				.text(rawData['timestamp'][0]['tab_name_list'].toString());
+		d3.select('.netcdfMetadata').append('p')
+				.attr('class','yAxisArray'+startStr)
+				.text(rawData['timestamp'][0]['section_results_number'].toString());
+
+		loadDataTimes = loadDataTimes + 1;
+	}
 	//setTimeout(nextTimeStampDistribution,25);
 }
 
@@ -151,6 +200,30 @@ function screenShot()
 			window.open(img);
 		}
     });	
+}
+
+// this function is used to get the contents of another url
+// this is from http://stackoverflow.com/questions/10642289/return-html-content-as-a-string-given-url-javascript-function
+function httpGet(theUrl)
+{
+    if (window.XMLHttpRequest)
+    {// code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp=new XMLHttpRequest();
+    }
+    else
+    {// code for IE6, IE5
+        xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    xmlhttp.onreadystatechange=function()
+    {
+        if (xmlhttp.readyState==4 && xmlhttp.status==200)
+        {
+            return xmlhttp.responseText;
+        }
+    }
+    xmlhttp.open("GET", theUrl, false );
+    xmlhttp.send();
+	return xmlhttp.responseText;   
 }
 
 // get flask server input data from html
