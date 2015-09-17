@@ -165,6 +165,7 @@ function nextTimeStampDistribution()
 		var startStr = loadDataTimes.toString();
 		var endStr = (parseInt(loadDataTimes)+1).toString();
 		// TODO the xaxis should be dynamically added not hard code 'time', the same for section number not 10
+/*
 		rawData = httpGet('/visualization/NetCDF/histogram/'+variableName+'/time/10/'+startStr+'/'+endStr+'/histogramVisualization');
 		rawData = JSON.parse(rawData);
 		d3.select('.netcdfMetadata').append('p')
@@ -175,6 +176,21 @@ function nextTimeStampDistribution()
 				.text(rawData['timestamp'][0]['section_results_number'].toString());
 
 		loadDataTimes = loadDataTimes + 1;
+*/
+		// use jquery instead of XMLHttpRequest, this makes button reacts when the function runs.
+		$.get('/visualization/NetCDF/histogram/'+variableName+'/time/10/'+startStr+'/'+endStr+'/histogramVisualization')
+			.done(function(data)
+				{
+					rawData = JSON.parse(data);
+					d3.select('.netcdfMetadata').append('p')
+							.attr('class','xAxisArray'+startStr)
+							.text(rawData['timestamp'][0]['tab_name_list'].toString());
+					d3.select('.netcdfMetadata').append('p')
+							.attr('class','yAxisArray'+startStr)
+							.text(rawData['timestamp'][0]['section_results_number'].toString());
+
+					loadDataTimes = loadDataTimes + 1;
+				});
 	}
 	//setTimeout(nextTimeStampDistribution,25);
 }
