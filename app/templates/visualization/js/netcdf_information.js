@@ -435,9 +435,9 @@ function updateParagraphMapOther(clickItemID)
 function getVariableDimensionsNameList()
 {
 	var variableDimensionNameListString = d3.select("."+variableName+'DimensionsList').text();
-	variableDimensionNameListString = variableDimensionNameListString.replace('	','');
-	variableDimensionNameListString = variableDimensionNameListString.replace(/(\r\n|\n|\r)/gm,'');
 	variableDimensionNameListString = variableDimensionNameListString.replace(/ /g,'');
+	variableDimensionNameListString = variableDimensionNameListString.replace(/(\r\n|\n|\r)/gm,'');
+	variableDimensionNameListString = variableDimensionNameListString.replace(/	/g,'');
 	return variableDimensionNameListString.split(',');
 }
 
@@ -564,8 +564,9 @@ function gotoHistogram()
 
 	if(boolInt && sectionNumber>=1 && sectionNumber<=100)
 	{
+		// initial step start frame is 0 and end frame is 0
 		window.location.href = '/visualization/NetCDF/histogram/'+variableName
-							   +'/'+xItem+'/'+sectionNumber.toString()+'/histogramVisualization';
+							   +'/'+xItem+'/'+sectionNumber.toString()+'/0/0/histogramVisualization';
 	}
 	else if(sectionNumber<1 || sectionNumber>100)
 	{
