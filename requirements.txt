@@ -11,7 +11,7 @@ Flask-SQLAlchemy==2.1
 Flask-WTF==0.12
 futures==3.0.5
 greenlet==0.4.9
-gunicorn==19.4.5
+gunicorn==19.5.0
 itsdangerous==0.24
 Jinja2==2.8
 Mako==1.0.4
