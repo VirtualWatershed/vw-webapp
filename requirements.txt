@@ -24,7 +24,7 @@ SQLAlchemy==1.0.12
 psycopg2==2.6.1
 vw-gstore-adapter==1.0.0
 #vw-webapp==1.0.0
-Werkzeug==0.11.8
+Werkzeug==0.15.3
 WTForms==2.1
 Flask-Session==0.2.3
 redis==2.10.5
